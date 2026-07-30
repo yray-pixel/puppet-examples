@@ -1,0 +1,50 @@
+[
+  {
+    "name": "profile_app_stack",
+    "path": "modules/profile_app_stack",
+    "description": "Python application stack with PostgreSQL database, including app deployment from Git, database configuration, service management, and monitoring.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "profile_haproxy",
+    "path": "modules/profile_haproxy",
+    "description": "HAProxy load balancer configuration with multi-backend support, SSL termination, and statistics monitoring.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "profile_redis_cluster",
+    "path": "modules/profile_redis_cluster",
+    "description": "Redis cluster configuration with PuppetDB node discovery.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "puppetdb_query_stub",
+    "path": "modules/puppetdb_query_stub",
+    "description": "Stub function for PuppetDB queries in development environments.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "profile::base::base",
+    "path": "site/profile/manifests/base/base.pp",
+    "description": "Base OS configuration included by all roles.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "role::app_stack",
+    "path": "site/role/manifests/app_stack.pp",
+    "description": "Role for application stack nodes combining base profile with app stack profile.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "role::haproxy",
+    "path": "site/role/manifests/haproxy.pp",
+    "description": "Role for HAProxy load balancer nodes.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "role::redis_cluster",
+    "path": "site/role/manifests/redis_cluster.pp",
+    "description": "Role for Redis cluster nodes.",
+    "technology": "Puppet"
+  }
+]
