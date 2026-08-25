@@ -1,0 +1,50 @@
+[
+  {
+    "name": "profile_app_stack",
+    "path": "modules/profile_app_stack",
+    "description": "Full application stack profile: Python app with PostgreSQL and systemd service.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "profile_haproxy",
+    "path": "modules/profile_haproxy",
+    "description": "HAProxy load balancer profile with multi-backend support.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "profile_redis_cluster",
+    "path": "modules/profile_redis_cluster",
+    "description": "Redis profile using puppet-redis with PuppetDB node discovery.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "puppetdb_query_stub",
+    "path": "modules/puppetdb_query_stub",
+    "description": "Stub function for PuppetDB queries when no PuppetDB is available.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "profile::base::base",
+    "path": "site/profile/manifests/base/base.pp",
+    "description": "Base OS profile included by all roles.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "role::app_stack",
+    "path": "site/role/manifests/app_stack.pp",
+    "description": "Application stack node role (Python app + PostgreSQL).",
+    "technology": "Puppet"
+  },
+  {
+    "name": "role::haproxy",
+    "path": "site/role/manifests/haproxy.pp",
+    "description": "HAProxy load balancer node role.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "role::redis_cluster",
+    "path": "site/role/manifests/redis_cluster.pp",
+    "description": "Redis cluster node role.",
+    "technology": "Puppet"
+  }
+]
