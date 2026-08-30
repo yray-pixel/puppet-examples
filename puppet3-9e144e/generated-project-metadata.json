@@ -1,0 +1,26 @@
+[
+  {
+    "name": "profile_app_stack",
+    "path": "modules/profile_app_stack",
+    "description": "Python application stack with gunicorn WSGI server, PostgreSQL database integration, Celery worker management, systemd service hardening, log rotation, automated backups, and health check monitoring with Prometheus metrics push support.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "profile_haproxy",
+    "path": "modules/profile_haproxy",
+    "description": "HAProxy load balancer with SSL/TLS termination, backend health checks, stick-table session persistence, UFW firewall rules, custom error pages, and stats interface with authentication.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "profile_redis_cluster",
+    "path": "modules/profile_redis_cluster",
+    "description": "Redis in-memory cache with authentication, persistence configuration, memory eviction policies, and systemd service management.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "base_utils",
+    "path": "site/modules/common/base_utils",
+    "description": "Base system utilities module providing MOTD management, OS-specific utility package installation, custom facts for platform information, Bolt tasks for service checking, and Bolt plans for rolling restarts.",
+    "technology": "Puppet"
+  }
+]
