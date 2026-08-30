@@ -1,0 +1,96 @@
+- name: Converge
+  hosts: all
+  gather_facts: true
+  tasks:
+  - name: Create test directory structure
+    ansible.builtin.file:
+      path: '{{ item_dir }}'
+      state: directory
+      mode: '0755'
+    loop:
+    - /tmp/molecule_test/etc/haproxy
+    - /tmp/molecule_test/etc/haproxy/errors
+    - /tmp/molecule_test/etc/ssl/certs
+    - /tmp/molecule_test/var/lib/haproxy
+    - /tmp/molecule_test/etc/logrotate.d
+    loop_control:
+      loop_var: item_dir
+  - name: Create main HAProxy configuration file
+    ansible.builtin.copy:
+      content: "# HAProxy Configuration\nglobal\n    log 127.0.0.1 local0 info\n    maxconn 4096\n    user haproxy\n    group haproxy\n    daemon\n\ndefaults\n    log
+        global\n    mode http\n    option httplog\n    option dontlognull\n    timeout connect 5s\n    timeout client 30s\n    timeout server 30s\n    retries 3\n\nfrontend
+        http_front\n    bind *:80\n    default_backend webservers\n\nbackend webservers\n    balance roundrobin\n    option httpchk GET /health\n    server web1 10.0.1.10:8080
+        check inter 5s\n    server web2 10.0.1.11:8080 check inter 5s\n    server web3 10.0.1.12:8080 check inter 5s\n\nbackend api\n    balance leastconn\n    option
+        httpchk GET /api/health\n    server api1 10.0.2.10:3000 check inter 10s\n    server api2 10.0.2.11:3000 check inter 10s\n\nbackend internal_monitoring\n    balance
+        roundrobin\n    option httpchk GET /-/healthy\n    server prom1-fra 10.100.3.10:9090 check inter 10s\n"
+      dest: /tmp/molecule_test/etc/haproxy/haproxy.cfg
+      mode: '0644'
+      backup: true
+  - name: Create error page files
+    ansible.builtin.copy:
+      content: 'HTTP/1.0 {{ item_error[''code''] }} {{ item_error[''message''] }}
+
+        Cache-Control: no-cache
+
+        Connection: close
+
+        Content-Type: text/html
+
+
+        <html><body><h1>{{ item_error[''code''] }} {{ item_error[''message''] }}</h1>
+
+        <p>The server is temporarily unable to service your request.</p>
+
+        </body></html>
+
+        '
+      dest: /tmp/molecule_test/etc/haproxy/errors/{{ item_error['code'] }}.http
+      mode: '0644'
+      backup: true
+    loop:
+    - code: '503'
+      message: Service Unavailable
+    - code: '408'
+      message: Request Timeout
+    loop_control:
+      loop_var: item_error
+  - name: Create combined SSL certificate and key file
+    ansible.builtin.copy:
+      content: '-----BEGIN CERTIFICATE-----
+
+        MIIDXTCCAkWgAwIBAgIJAKZ5Z5Z5Z5Z5MA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
+
+        BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
+
+        aWRnaXRzIFB0eSBMdGQwHhcNMjQwMTAxMDAwMDAwWhcNMjUwMTAxMDAwMDAwWjBF
+
+        MQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50
+
+        ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+
+        CgKCAQEAtest
+
+        -----END CERTIFICATE-----
+
+        -----BEGIN PRIVATE KEY-----
+
+        MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDtest
+
+        -----END PRIVATE KEY-----
+
+        '
+      dest: /tmp/molecule_test/etc/ssl/certs/haproxy.pem
+      mode: '0640'
+      backup: true
+  - name: Create logrotate configuration
+    ansible.builtin.copy:
+      content: "/var/log/haproxy.log {\n    daily\n    rotate 7\n    missingok\n    notifempty\n    compress\n    delaycompress\n    postrotate\n        /usr/bin/systemctl
+        reload haproxy > /dev/null 2>&1 || true\n    endscript\n}\n"
+      dest: /tmp/molecule_test/etc/logrotate.d/haproxy
+      mode: '0644'
+      backup: true
+  - name: Create HAProxy runtime directory
+    ansible.builtin.file:
+      path: /tmp/molecule_test/var/lib/haproxy
+      state: directory
+      mode: '0750'

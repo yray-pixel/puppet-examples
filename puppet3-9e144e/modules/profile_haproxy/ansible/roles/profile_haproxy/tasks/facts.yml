@@ -1,0 +1,11 @@
+---
+- name: Get HAProxy version
+  ansible.builtin.command:
+    cmd: haproxy -v
+  register: haproxy_version_output
+  changed_when: false
+  failed_when: false
+- name: Parse HAProxy version
+  ansible.builtin.set_fact:
+    haproxy_version: "{{ haproxy_version_output.stdout | regex_search('version\\s+(\\d+\\.\\d+\\.\\d+)', '\\1') | first | default('unknown') }}"
+  when: haproxy_version_output.rc == 0

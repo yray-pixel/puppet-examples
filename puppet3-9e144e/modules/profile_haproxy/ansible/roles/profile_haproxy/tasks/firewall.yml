@@ -1,0 +1,44 @@
+---
+- name: Configure firewall rules
+  when: profile_haproxy_firewall_provider == 'ufw'
+  block:
+    - name: Install UFW package
+      ansible.builtin.package:
+        name: ufw
+        state: present
+    - name: Check if UFW HTTP rule exists
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw status numbered
+      register: ufw_status
+      changed_when: false
+    - name: Allow HTTP traffic
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw allow 80/tcp
+      when: "'80/tcp' not in ufw_status.stdout"
+      changed_when: true
+    - name: Allow HTTPS traffic
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw allow 443/tcp
+      when: "'443/tcp' not in ufw_status.stdout"
+      changed_when: true
+    - name: Allow stats port traffic
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw allow {{ profile_haproxy_stats_port }}/tcp
+      when:
+        - profile_haproxy_stats_enabled
+        - profile_haproxy_stats_port | string + '/tcp' not in ufw_status.stdout
+      changed_when: true
+    - name: Check UFW status
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw status
+      register: ufw_enabled_check
+      changed_when: false
+    - name: Enable UFW
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw --force enable
+      when: "'Status: active' not in ufw_enabled_check.stdout"
+      changed_when: true
+- name: Firewall provider not supported
+  ansible.builtin.debug:
+    msg: Firewall provider {{ profile_haproxy_firewall_provider }} is not supported by this role
+  when: profile_haproxy_firewall_provider not in ['ufw', 'none']

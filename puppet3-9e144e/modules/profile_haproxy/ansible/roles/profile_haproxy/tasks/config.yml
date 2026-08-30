@@ -1,0 +1,67 @@
+---
+- name: Create HAProxy errors directory
+  ansible.builtin.file:
+    path: "{{ profile_haproxy_config_dir }}/errors"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+- name: Create SSL certificate directory
+  ansible.builtin.file:
+    path: "{{ profile_haproxy_ssl_cert_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: profile_haproxy_ssl_enabled
+- name: Create SSL private key directory
+  ansible.builtin.file:
+    path: "{{ profile_haproxy_ssl_key_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: profile_haproxy_ssl_enabled
+- name: Deploy main HAProxy configuration
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: "{{ profile_haproxy_config_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  notify: Reload HAProxy
+- name: Deploy 503 error page
+  ansible.builtin.template:
+    src: 503.http.j2
+    dest: "{{ profile_haproxy_config_dir }}/errors/503.http"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+- name: Deploy 408 error page
+  ansible.builtin.template:
+    src: 408.http.j2
+    dest: "{{ profile_haproxy_config_dir }}/errors/408.http"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+- name: Deploy SSL certificate and key as combined PEM
+  ansible.builtin.copy:
+    content: "{{ ssl_certificate }}\n{{ ssl_private_key }}\n"
+    dest: "{{ profile_haproxy_ssl_cert_path }}/haproxy.pem"
+    owner: root
+    group: "{{ profile_haproxy_group }}"
+    mode: "0640"
+    backup: true
+  when: profile_haproxy_ssl_enabled
+  notify: Reload HAProxy
+- name: Deploy logrotate configuration
+  ansible.builtin.template:
+    src: logrotate.j2
+    dest: /etc/logrotate.d/haproxy
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true

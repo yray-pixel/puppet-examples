@@ -1,0 +1,201 @@
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+  - name: Check HAProxy configuration files exist
+    ansible.builtin.stat:
+      path: '{{ item_config }}'
+    loop:
+    - /tmp/molecule_test/etc/haproxy/haproxy.cfg
+    - /tmp/molecule_test/etc/haproxy/errors/503.http
+    - /tmp/molecule_test/etc/haproxy/errors/408.http
+    - /tmp/molecule_test/etc/logrotate.d/haproxy
+    loop_control:
+      loop_var: item_config
+    register: config_stat_results
+  - name: Assert configuration files were created
+    ansible.builtin.assert:
+      that:
+      - item_result['stat']['exists']
+      - item_result['stat']['isreg']
+      - item_result['stat']['size'] > 0
+      fail_msg: Expected configuration file not found or empty
+    loop: '{{ config_stat_results[''results''] }}'
+    loop_control:
+      loop_var: item_result
+  - name: Check HAProxy directories exist
+    ansible.builtin.stat:
+      path: '{{ item_dir }}'
+    loop:
+    - /tmp/molecule_test/etc/haproxy
+    - /tmp/molecule_test/etc/haproxy/errors
+    - /tmp/molecule_test/var/lib/haproxy
+    loop_control:
+      loop_var: item_dir
+    register: dir_stat_results
+  - name: Assert directories were created
+    ansible.builtin.assert:
+      that:
+      - item_result['stat']['exists']
+      - item_result['stat']['isdir']
+      fail_msg: Expected directory not found
+    loop: '{{ dir_stat_results[''results''] }}'
+    loop_control:
+      loop_var: item_result
+  - name: Read main HAProxy configuration
+    ansible.builtin.slurp:
+      path: /tmp/molecule_test/etc/haproxy/haproxy.cfg
+    register: haproxy_cfg_content
+  - name: Assert main configuration contains required sections
+    ansible.builtin.assert:
+      that:
+      - '''global'' in haproxy_cfg_decoded'
+      - '''defaults'' in haproxy_cfg_decoded'
+      - '''maxconn'' in haproxy_cfg_decoded'
+      - '''timeout connect'' in haproxy_cfg_decoded'
+      - '''timeout client'' in haproxy_cfg_decoded'
+      - '''timeout server'' in haproxy_cfg_decoded'
+      fail_msg: Main configuration missing required sections
+    vars:
+      haproxy_cfg_decoded: '{{ haproxy_cfg_content[''content''] | b64decode }}'
+  - name: Assert webservers backend is in main configuration
+    ansible.builtin.assert:
+      that:
+      - '''backend webservers'' in haproxy_cfg_decoded'
+      - '''balance roundrobin'' in haproxy_cfg_decoded'
+      - '''web1'' in haproxy_cfg_decoded'
+      - '''web2'' in haproxy_cfg_decoded'
+      - '''web3'' in haproxy_cfg_decoded'
+      - '''10.0.1.10'' in haproxy_cfg_decoded'
+      - '''10.0.1.11'' in haproxy_cfg_decoded'
+      - '''10.0.1.12'' in haproxy_cfg_decoded'
+      fail_msg: Webservers backend configuration incorrect
+    vars:
+      haproxy_cfg_decoded: '{{ haproxy_cfg_content[''content''] | b64decode }}'
+  - name: Assert api backend is in main configuration
+    ansible.builtin.assert:
+      that:
+      - '''backend api'' in haproxy_cfg_decoded'
+      - '''balance leastconn'' in haproxy_cfg_decoded'
+      - '''api1'' in haproxy_cfg_decoded'
+      - '''api2'' in haproxy_cfg_decoded'
+      - '''10.0.2.10'' in haproxy_cfg_decoded'
+      - '''10.0.2.11'' in haproxy_cfg_decoded'
+      fail_msg: API backend configuration incorrect
+    vars:
+      haproxy_cfg_decoded: '{{ haproxy_cfg_content[''content''] | b64decode }}'
+  - name: Assert internal_monitoring backend is in main configuration
+    ansible.builtin.assert:
+      that:
+      - '''backend internal_monitoring'' in haproxy_cfg_decoded'
+      - '''prom1-fra'' in haproxy_cfg_decoded'
+      - '''10.100.3.10'' in haproxy_cfg_decoded'
+      fail_msg: Internal monitoring backend configuration incorrect
+    vars:
+      haproxy_cfg_decoded: '{{ haproxy_cfg_content[''content''] | b64decode }}'
+  - name: Read error page files
+    ansible.builtin.slurp:
+      path: /tmp/molecule_test/etc/haproxy/errors/{{ item_error_code }}.http
+    loop:
+    - '503'
+    - '408'
+    loop_control:
+      loop_var: item_error_code
+    register: error_page_results
+  - name: Assert error pages contain HTTP response headers
+    ansible.builtin.assert:
+      that:
+      - '''HTTP/1.0'' in item_result[''content''] | b64decode'
+      - item_result['item_error_code'] in (item_result['content'] | b64decode)
+      fail_msg: Error page missing HTTP headers
+    loop: '{{ error_page_results[''results''] }}'
+    loop_control:
+      loop_var: item_result
+  - name: Check combined SSL certificate and key file exists
+    ansible.builtin.stat:
+      path: /tmp/molecule_test/etc/ssl/certs/haproxy.pem
+    register: ssl_pem_stat
+  - name: Assert combined SSL PEM file was created with correct permissions
+    ansible.builtin.assert:
+      that:
+      - ssl_pem_stat['stat']['exists']
+      - ssl_pem_stat['stat']['isreg']
+      - ssl_pem_stat['stat']['mode'] == '0640'
+      fail_msg: Combined SSL PEM file not found or has incorrect permissions
+  - name: Read combined SSL PEM file
+    ansible.builtin.slurp:
+      path: /tmp/molecule_test/etc/ssl/certs/haproxy.pem
+    register: ssl_pem_content
+  - name: Assert SSL PEM file contains both certificate and key
+    ansible.builtin.assert:
+      that:
+      - '''BEGIN CERTIFICATE'' in ssl_pem_decoded'
+      - '''BEGIN PRIVATE KEY'' in ssl_pem_decoded'
+      fail_msg: SSL PEM file missing certificate or private key
+    vars:
+      ssl_pem_decoded: '{{ ssl_pem_content[''content''] | b64decode }}'
+  - name: Read logrotate configuration
+    ansible.builtin.slurp:
+      path: /tmp/molecule_test/etc/logrotate.d/haproxy
+    register: logrotate_cfg_content
+  - name: Assert logrotate configuration is valid
+    ansible.builtin.assert:
+      that:
+      - '''daily'' in logrotate_cfg_decoded or ''rotate'' in logrotate_cfg_decoded'
+      - '''haproxy'' in logrotate_cfg_decoded'
+      fail_msg: Logrotate configuration incorrect
+    vars:
+      logrotate_cfg_decoded: '{{ logrotate_cfg_content[''content''] | b64decode }}'
+  - name: Check HAProxy runtime directory permissions
+    ansible.builtin.stat:
+      path: /tmp/molecule_test/var/lib/haproxy
+    register: runtime_dir_stat
+  - name: Assert runtime directory has correct permissions
+    ansible.builtin.assert:
+      that:
+      - runtime_dir_stat['stat']['exists']
+      - runtime_dir_stat['stat']['isdir']
+      - runtime_dir_stat['stat']['mode'] == '0750'
+      fail_msg: Runtime directory has incorrect permissions
+- name: Verify service and network checks (container-unsafe)
+  hosts: all
+  gather_facts: false
+  tasks:
+  - name: Check HAProxy service status
+    ansible.builtin.service_facts: null
+    tags: molecule-notest
+  - name: Assert HAProxy service is running
+    ansible.builtin.assert:
+      that:
+      - '''haproxy.service'' in ansible_facts.services'
+      - ansible_facts.services['haproxy.service']['state'] == 'running'
+      fail_msg: HAProxy service not running
+    tags: molecule-notest
+  - name: Check HTTP port is listening
+    ansible.builtin.wait_for:
+      port: 80
+      timeout: 5
+    tags: molecule-notest
+  - name: Check HTTPS port is listening
+    ansible.builtin.wait_for:
+      port: 443
+      timeout: 5
+    tags: molecule-notest
+  - name: Check stats port is listening
+    ansible.builtin.wait_for:
+      port: 9001
+      timeout: 5
+    tags: molecule-notest
+  - name: Test HTTP endpoint
+    ansible.builtin.uri:
+      url: http://localhost/health
+      status_code: 200
+    tags: molecule-notest
+  - name: Test stats endpoint
+    ansible.builtin.uri:
+      url: http://localhost:9001/haproxy-stats
+      status_code: 200
+      user: admin
+      password: test
+      force_basic_auth: true
+    tags: molecule-notest

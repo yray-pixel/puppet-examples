@@ -1,0 +1,30 @@
+---
+- name: Validate credential variables
+  ansible.builtin.include_tasks: validate_credentials.yml
+- name: Include OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  when: ansible_os_family in ['Debian', 'RedHat']
+- name: Include environment-specific variables
+  ansible.builtin.include_vars: environment_{{ lookup('ansible.builtin.env', 'ENVIRONMENT') | default('production') }}.yml
+  when: lookup('ansible.builtin.env', 'ENVIRONMENT', default='') != ''
+- name: Include datacenter-specific variables
+  ansible.builtin.include_vars: datacenter_{{ datacenter }}.yml
+  when: datacenter is defined
+- name: Include cluster-specific variables
+  ansible.builtin.include_vars: cluster_{{ cluster }}.yml
+  when: cluster is defined
+- name: Include node-specific variables
+  ansible.builtin.include_vars: node_{{ inventory_hostname }}.yml
+  failed_when: false
+- name: Install HAProxy packages and dependencies
+  ansible.builtin.include_tasks: install.yml
+- name: Configure HAProxy
+  ansible.builtin.include_tasks: config.yml
+- name: Discover backend members
+  ansible.builtin.include_tasks: discover.yml
+- name: Manage HAProxy service
+  ansible.builtin.include_tasks: service.yml
+- name: Configure firewall rules
+  ansible.builtin.include_tasks: firewall.yml
+- name: Gather HAProxy facts
+  ansible.builtin.include_tasks: facts.yml

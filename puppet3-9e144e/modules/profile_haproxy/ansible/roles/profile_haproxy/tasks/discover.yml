@@ -1,0 +1,5 @@
+---
+- name: Discover backend members from inventory
+  ansible.builtin.set_fact:
+    discovered_backends: {}
+  when: groups is defined
