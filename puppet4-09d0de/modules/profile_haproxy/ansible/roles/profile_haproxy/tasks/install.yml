@@ -1,0 +1,66 @@
+---
+- name: Install HAProxy package
+  ansible.builtin.package:
+    name: "{{ profile_haproxy_package_name }}"
+    state: present
+  become: true
+- name: Install extra packages
+  ansible.builtin.package:
+    name: "{{ profile_haproxy_extra_packages }}"
+    state: present
+  become: true
+  when: profile_haproxy_extra_packages | length > 0
+- name: Ensure HAProxy group exists
+  ansible.builtin.group:
+    name: "{{ profile_haproxy_group }}"
+    system: true
+    state: present
+  become: true
+- name: Ensure HAProxy user exists
+  ansible.builtin.user:
+    name: "{{ profile_haproxy_user }}"
+    group: "{{ profile_haproxy_group }}"
+    home: /var/lib/haproxy
+    shell: /sbin/nologin
+    system: true
+    state: present
+  become: true
+- name: Create HAProxy configuration directories
+  ansible.builtin.file:
+    path: "{{ item_dir }}"
+    state: directory
+    owner: root
+    group: "{{ profile_haproxy_group }}"
+    mode: "0755"
+  loop:
+    - "{{ profile_haproxy_config_dir }}"
+    - "{{ profile_haproxy_config_dir }}/conf.d"
+    - "{{ profile_haproxy_config_dir }}/errors"
+  loop_control:
+    loop_var: item_dir
+  become: true
+- name: Create HAProxy lib directory
+  ansible.builtin.file:
+    path: /var/lib/haproxy
+    state: directory
+    owner: "{{ profile_haproxy_user }}"
+    group: "{{ profile_haproxy_group }}"
+    mode: "0750"
+  become: true
+- name: Check current SELinux boolean value
+  ansible.builtin.shell: getsebool haproxy_connect_any | grep -q on
+  register: selinux_status
+  changed_when: false
+  failed_when: false
+  when: profile_haproxy_selinux_enabled | bool
+  become: true
+- name: Configure SELinux for HAProxy
+  ansible.builtin.command:
+    cmd: setsebool -P haproxy_connect_any 1
+  register: selinux_result
+  changed_when: selinux_result.rc == 0
+  failed_when: selinux_result.rc != 0 and 'not found' not in selinux_result.stderr
+  when:
+    - profile_haproxy_selinux_enabled | bool
+    - selinux_status.rc != 0
+  become: true

@@ -1,0 +1,43 @@
+---
+- name: Create systemd override directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/haproxy.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+- name: Create systemd override file
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/haproxy.service.d/override.conf
+    content: "[Service] ExecStart= ExecStart=/usr/sbin/haproxy -Ws -f {{ profile_haproxy_config_file }} -f {{ profile_haproxy_config_dir }}/conf.d/ -p /run/haproxy.pid
+      -S /run/haproxy-master.sock "
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  become: true
+  notify: systemd daemon-reload
+- name: Create logrotate configuration
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/haproxy
+    content: "/var/log/haproxy/*.log { daily rotate 14 missingok notifempty compress delaycompress sharedscripts postrotate         /bin/kill -HUP $(cat /var/run/haproxy.pid
+      2>/dev/null) 2>/dev/null || true endscript } "
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  become: true
+- name: Validate HAProxy configuration
+  ansible.builtin.command:
+    cmd: haproxy -c -f {{ profile_haproxy_config_file }} -f {{ profile_haproxy_config_dir }}/conf.d/
+  register: haproxy_check
+  changed_when: false
+  failed_when: haproxy_check.rc != 0
+  become: true
+- name: Ensure HAProxy service is running and enabled
+  ansible.builtin.service:
+    name: "{{ profile_haproxy_service_name }}"
+    state: started
+    enabled: true
+  become: true

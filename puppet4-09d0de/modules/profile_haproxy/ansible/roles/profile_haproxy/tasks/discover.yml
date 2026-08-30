@@ -1,0 +1,58 @@
+---
+- name: Create custom fact directory
+  ansible.builtin.file:
+    path: /etc/ansible/facts.d
+    state: directory
+    mode: "0755"
+  become: true
+- name: Install HAProxy version detection script
+  ansible.builtin.copy:
+    src: haproxy_version.fact
+    dest: /etc/ansible/facts.d/haproxy_version.fact
+    mode: "0755"
+    backup: true
+  become: true
+- name: Refresh local facts
+  ansible.builtin.setup:
+    filter: ansible_local
+  become: true
+- name: Display HAProxy version
+  ansible.builtin.debug:
+    msg: "Detected HAProxy version: {{ ansible_local.haproxy_version.version | default('unknown') }}"
+  when: ansible_local.haproxy_version is defined
+- name: Create backend configuration for webservers
+  ansible.builtin.template:
+    src: backend.conf.j2
+    dest: "{{ profile_haproxy_config_dir }}/conf.d/webservers.cfg"
+    owner: root
+    group: "{{ profile_haproxy_group }}"
+    mode: "0644"
+    backup: true
+  vars:
+    backend_name: webservers
+    balance: roundrobin
+    backend_port: 8080
+    health_check: httpchk GET /health
+    health_interval: 5s
+    servers: "{{ profile_haproxy_backends.webservers.servers }}"
+    ssl_enabled: "{{ profile_haproxy_ssl_enabled }}"
+  become: true
+  notify: reload haproxy
+- name: Create backend configuration for API servers
+  ansible.builtin.template:
+    src: backend.conf.j2
+    dest: "{{ profile_haproxy_config_dir }}/conf.d/api.cfg"
+    owner: root
+    group: "{{ profile_haproxy_group }}"
+    mode: "0644"
+    backup: true
+  vars:
+    backend_name: api
+    balance: leastconn
+    backend_port: 3000
+    health_check: httpchk GET /api/health
+    health_interval: 10s
+    servers: "{{ profile_haproxy_backends.api.servers }}"
+    ssl_enabled: "{{ profile_haproxy_ssl_enabled }}"
+  become: true
+  notify: reload haproxy

@@ -1,0 +1,50 @@
+---
+- name: Create HAProxy main configuration
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: "{{ profile_haproxy_config_file }}"
+    owner: root
+    group: "{{ profile_haproxy_group }}"
+    mode: "0644"
+    backup: true
+  become: true
+  notify: restart haproxy
+- name: Create HAProxy error pages directory
+  ansible.builtin.file:
+    path: "{{ profile_haproxy_config_dir }}/errors"
+    state: directory
+    owner: root
+    group: "{{ profile_haproxy_group }}"
+    mode: "0755"
+  become: true
+- name: Install HAProxy error pages
+  ansible.builtin.copy:
+    src: errors/{{ item }}.http
+    dest: "{{ profile_haproxy_config_dir }}/errors/{{ item }}.http"
+    owner: root
+    group: "{{ profile_haproxy_group }}"
+    mode: "0644"
+  loop:
+    - "408"
+    - "503"
+  become: true
+  notify: restart haproxy
+- name: Create systemd override directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/{{ profile_haproxy_service_name }}.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+- name: Create systemd override file
+  ansible.builtin.copy:
+    content: "[Service]\nLimitNOFILE=65536\n"
+    dest: /etc/systemd/system/{{ profile_haproxy_service_name }}.service.d/limits.conf
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify:
+    - systemd daemon-reload
+    - restart haproxy

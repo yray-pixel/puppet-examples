@@ -1,0 +1,46 @@
+---
+- name: Validate credential variables
+  ansible.builtin.include_tasks: validate_credentials.yml
+- name: Include OS-specific variables
+  ansible.builtin.include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_os_family }}.yml"
+    - "{{ ansible_distribution }}.yml"
+    - default.yml
+  tags:
+    - always
+- name: Include environment-specific variables if defined
+  ansible.builtin.include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_env.ENVIRONMENT }}.yml"
+    - production.yml
+    - []
+  when: ansible_env.ENVIRONMENT is defined or ansible_env.ENVIRONMENT == 'production'
+  tags:
+    - always
+- name: Include installation tasks
+  ansible.builtin.include_tasks: install.yml
+  tags:
+    - install
+    - haproxy
+- name: Include configuration tasks
+  ansible.builtin.include_tasks: config.yml
+  tags:
+    - config
+    - haproxy
+- name: Include discovery tasks if enabled
+  ansible.builtin.include_tasks: discover.yml
+  when: profile_haproxy_discovery_enabled | bool
+  tags:
+    - discover
+    - haproxy
+- name: Include service tasks
+  ansible.builtin.include_tasks: service.yml
+  tags:
+    - service
+    - haproxy
+- name: Include firewall tasks
+  ansible.builtin.include_tasks: firewall.yml
+  tags:
+    - firewall
+    - haproxy

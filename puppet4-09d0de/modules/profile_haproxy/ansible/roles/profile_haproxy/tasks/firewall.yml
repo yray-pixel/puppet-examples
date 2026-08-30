@@ -1,0 +1,68 @@
+---
+- name: Set up firewall rules based on provider
+  ansible.builtin.include_tasks: firewall_{{ profile_haproxy_firewall_provider }}.yml
+  when: profile_haproxy_firewall_provider != 'none'
+- name: Create firewalld tasks file
+  ansible.builtin.copy:
+    dest: "{{ playbook_dir }}/tasks/firewall_firewalld.yml"
+    content: "---\n# FirewallD configuration for HAProxy\n\n- name: Allow HTTP port in firewalld\n  ansible.posix.firewalld:\n    port: 80/tcp\n    zone: \"{{ profile_haproxy_firewall_zone
+      }}\"\n    permanent: true\n    state: enabled\n  become: true\n  notify: Reload firewalld\n\n- name: Allow HTTPS port in firewalld\n  ansible.posix.firewalld:\n\
+      \    port: 443/tcp\n    zone: \"{{ profile_haproxy_firewall_zone }}\"\n    permanent: true\n    state: enabled\n  become: true\n  notify: Reload firewalld\n\
+      \n- name: Allow stats port in firewalld\n  ansible.posix.firewalld:\n    port: \"{{ profile_haproxy_stats_port }}/tcp\"\n    zone: \"{{ profile_haproxy_firewall_zone
+      }}\"\n    permanent: true\n    state: enabled\n  become: true\n  notify: Reload firewalld\n  when: profile_haproxy_stats_enabled | bool\n"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  when: false
+- name: Create UFW tasks file
+  ansible.builtin.copy:
+    dest: "{{ playbook_dir }}/tasks/firewall_ufw.yml"
+    content: "---\n# UFW configuration for HAProxy\n\n- name: Install UFW package\n  ansible.builtin.package:\n    name: ufw\n    state: present\n  become: true\n\
+      \n- name: Allow HTTP port in UFW\n  community.general.ufw:\n    rule: allow\n    port: '80'\n    proto: tcp\n  become: true\n\n- name: Allow HTTPS port in UFW\n\
+      \  community.general.ufw:\n    rule: allow\n    port: '443'\n    proto: tcp\n  become: true\n\n- name: Allow stats port in UFW\n  community.general.ufw:\n \
+      \   rule: allow\n    port: \"{{ profile_haproxy_stats_port }}\"\n    proto: tcp\n  become: true\n  when: profile_haproxy_stats_enabled | bool\n\n- name: Enable
+      UFW\n  community.general.ufw:\n    state: enabled\n  become: true\n"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  when: false
+- name: Create firewalld tasks file
+  ansible.builtin.copy:
+    dest: "{{ role_path }}/tasks/firewall_firewalld.yml"
+    content: "---\n# FirewallD configuration for HAProxy\n\n- name: Allow HTTP port in firewalld\n  ansible.posix.firewalld:\n    port: 80/tcp\n    zone: \"{{ profile_haproxy_firewall_zone
+      }}\"\n    permanent: true\n    state: enabled\n  become: true\n  notify: Reload firewalld\n\n- name: Allow HTTPS port in firewalld\n  ansible.posix.firewalld:\n\
+      \    port: 443/tcp\n    zone: \"{{ profile_haproxy_firewall_zone }}\"\n    permanent: true\n    state: enabled\n  become: true\n  notify: Reload firewalld\n\
+      \n- name: Allow stats port in firewalld\n  ansible.posix.firewalld:\n    port: \"{{ profile_haproxy_stats_port }}/tcp\"\n    zone: \"{{ profile_haproxy_firewall_zone
+      }}\"\n    permanent: true\n    state: enabled\n  become: true\n  notify: Reload firewalld\n  when: profile_haproxy_stats_enabled | bool\n"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  become: true
+- name: Create UFW tasks file
+  ansible.builtin.copy:
+    dest: "{{ role_path }}/tasks/firewall_ufw.yml"
+    content: "---\n# UFW configuration for HAProxy\n\n- name: Install UFW package\n  ansible.builtin.package:\n    name: ufw\n    state: present\n  become: true\n\
+      \n- name: Allow HTTP port in UFW\n  ansible.builtin.command:\n    cmd: ufw allow 80/tcp\n  register: ufw_http_result\n  changed_when: \"'Skipping' not in ufw_http_result.stdout\"\
+      \n  become: true\n\n- name: Allow HTTPS port in UFW\n  ansible.builtin.command:\n    cmd: ufw allow 443/tcp\n  register: ufw_https_result\n  changed_when: \"\
+      'Skipping' not in ufw_https_result.stdout\"\n  become: true\n\n- name: Allow stats port in UFW\n  ansible.builtin.command:\n    cmd: \"ufw allow {{ profile_haproxy_stats_port
+      }}/tcp\"\n  register: ufw_stats_result\n  changed_when: \"'Skipping' not in ufw_stats_result.stdout\"\n  become: true\n  when: profile_haproxy_stats_enabled
+      | bool\n\n- name: Enable UFW\n  ansible.builtin.command:\n    cmd: ufw --force enable\n  register: ufw_enable_result\n  changed_when: \"'already enabled' not
+      in ufw_enable_result.stdout\"\n  become: true\n"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  become: true
+- name: Create none tasks file
+  ansible.builtin.copy:
+    dest: "{{ role_path }}/tasks/firewall_none.yml"
+    content: "---\n# No firewall configuration (disabled)\n\n- name: Firewall management disabled\n  ansible.builtin.debug:\n    msg: \"Firewall management is disabled
+      via configuration\"\n"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  become: true

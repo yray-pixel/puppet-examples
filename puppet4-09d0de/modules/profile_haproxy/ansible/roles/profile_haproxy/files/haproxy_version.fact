@@ -1,0 +1,26 @@
+#!/bin/bash
+# Custom fact to detect HAProxy version
+
+if [ -f /usr/sbin/haproxy ] || [ -f /sbin/haproxy ] || [ -f /usr/local/sbin/haproxy ]; then
+  HAPROXY_VERSION=$(haproxy -v 2>/dev/null | grep -oE 'version [0-9]+\.[0-9]+\.[0-9]+' | awk '{print $2}')
+  
+  if [ -n "$HAPROXY_VERSION" ]; then
+    cat << EOF
+{
+  "version": "$HAPROXY_VERSION"
+}
+EOF
+  else
+    cat << EOF
+{
+  "version": "unknown"
+}
+EOF
+  fi
+else
+  cat << EOF
+{
+  "version": "not_installed"
+}
+EOF
+fi
