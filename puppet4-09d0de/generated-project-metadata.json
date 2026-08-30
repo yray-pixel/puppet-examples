@@ -1,0 +1,44 @@
+[
+  {
+    "name": "base_utils",
+    "path": "site-modules/base_utils",
+    "description": "Base utility module providing common helpers, defined types, functions, and tasks.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "profile::base::base",
+    "path": "site-modules/profile/manifests/base",
+    "description": "Base OS profile included by all roles, handles common OS-level configuration.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "profile_app_stack",
+    "path": "site-modules/profile_app_stack",
+    "description": "Full application stack profile for Python applications with PostgreSQL backend and systemd service.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "profile_haproxy",
+    "path": "site-modules/profile_haproxy",
+    "description": "HAProxy load balancer profile with multi-backend support.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "profile_postgresql",
+    "path": "site-modules/profile_postgresql",
+    "description": "PostgreSQL installation with PGDG repo and version pinning.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "profile_redis_cluster",
+    "path": "site-modules/profile_redis_cluster",
+    "description": "Redis profile using puppet-redis with PuppetDB node discovery.",
+    "technology": "Puppet"
+  },
+  {
+    "name": "role::app_server",
+    "path": "site-modules/role/manifests/app_server.pp",
+    "description": "Role class that combines profiles for application servers.",
+    "technology": "Puppet"
+  }
+]
