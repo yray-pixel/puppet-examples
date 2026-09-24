@@ -1,0 +1,35 @@
+- name: Converge
+  hosts: all
+  gather_facts: true
+  tasks:
+  - name: Create expected directories
+    ansible.builtin.file:
+      path: '{{ item_dir }}'
+      state: directory
+      mode: '0755'
+    loop:
+    - /tmp/molecule_test/etc/haproxy
+    - /tmp/molecule_test/run/haproxy
+    loop_control:
+      loop_var: item_dir
+  - name: Create mock HAProxy configuration file
+    ansible.builtin.copy:
+      content: "global\n    log /dev/log local0\n    chroot /var/lib/haproxy\n    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners\n
+        \   stats timeout 30s\n    user haproxy\n    group haproxy\n    daemon\n\ndefaults\n    log global\n    mode http\n    option httplog\n    option dontlognull\n
+        \   timeout connect 5000\n    timeout client  50000\n    timeout server  50000\n\nfrontend http_front\n    bind *:80\n    default_backend http_back\n\nbackend
+        http_back\n    balance roundrobin\n    server server1 127.0.0.1:8080 check\n\nlisten stats\n    bind *:8404\n    stats enable\n    stats uri /stats\n    stats
+        refresh 10s\n"
+      dest: /tmp/molecule_test/etc/haproxy/haproxy.cfg
+      mode: '0644'
+      backup: true
+  - name: Set test variables
+    ansible.builtin.set_fact:
+      stats_username: admin
+      stats_password: password123
+      profile_base_manage_ntp: true
+      profile_base_manage_syslog: true
+      profile_base_manage_utils: true
+      profile_haproxy_package_name: haproxy
+      profile_haproxy_extra_packages: []
+      profile_haproxy_ssl_enabled: true
+      profile_haproxy_stick_table_enabled: false

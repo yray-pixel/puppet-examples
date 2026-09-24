@@ -1,0 +1,10 @@
+---
+environments:
+  production:
+    ntp_servers:
+      - ntp1.prod.example.com
+      - ntp2.prod.example.com
+    syslog_server: prod-log.example.com
+    syslog_facility: local1
+  staging:
+    syslog_server: stage-log.example.com

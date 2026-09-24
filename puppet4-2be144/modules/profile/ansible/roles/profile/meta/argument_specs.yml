@@ -1,0 +1,77 @@
+---
+argument_specs:
+  main:
+    short_description: Configures base OS settings and HAProxy load balancer
+    description:
+      - Implements a layered configuration approach with base OS settings and HAProxy load balancer functionality.
+      - Follows the roles and profiles pattern where the role_haproxy tasks compose the base and haproxy tasks with proper ordering.
+    options:
+      profile_base_manage_ntp:
+        type: bool
+        required: false
+        default: true
+        description: Whether to manage NTP (chrony) configuration.
+      profile_base_manage_syslog:
+        type: bool
+        required: false
+        default: true
+        description: Whether to manage syslog (rsyslog) configuration.
+      profile_base_manage_utils:
+        type: bool
+        required: false
+        default: true
+        description: Whether to include base utilities.
+      profile_haproxy_package_name:
+        type: str
+        required: false
+        default: haproxy
+        description: Name of the HAProxy package to install.
+      profile_haproxy_firewall_provider:
+        type: str
+        required: false
+        default: iptables
+        description: Firewall provider to use for HAProxy configuration.
+      profile_haproxy_extra_packages:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: List of additional packages to install.
+      profile_haproxy_ssl_enabled:
+        type: bool
+        required: false
+        default: true
+        description: Whether to enable SSL for HAProxy.
+      profile_haproxy_stick_table_enabled:
+        type: bool
+        required: false
+        default: false
+        description: Whether to enable stick tables for HAProxy.
+      ntp_servers:
+        type: list
+        elements: str
+        required: false
+        default:
+          - 0.pool.ntp.org
+          - 1.pool.ntp.org
+          - 2.pool.ntp.org
+          - 3.pool.ntp.org
+        description: List of NTP servers to use.
+      syslog_server:
+        type: str
+        required: false
+        default: central-log.example.com
+        description: Syslog server to send logs to.
+      syslog_facility:
+        type: str
+        required: false
+        default: local0
+        description: Syslog facility to use.
+      stats_username:
+        type: str
+        required: true
+        description: Username for HAProxy stats authentication. Injected by AAP credential type.
+      stats_password:
+        type: str
+        required: true
+        description: Password for HAProxy stats authentication. Injected by AAP credential type.

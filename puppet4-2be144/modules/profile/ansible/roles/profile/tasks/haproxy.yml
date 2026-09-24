@@ -1,0 +1,71 @@
+---
+- name: Install HAProxy package
+  ansible.builtin.package:
+    name: "{{ profile_haproxy_package_name }}"
+    state: present
+- name: Install extra packages
+  ansible.builtin.package:
+    name: "{{ profile_haproxy_extra_packages }}"
+    state: present
+  when: profile_haproxy_extra_packages | length > 0
+- name: Ensure haproxy group exists
+  ansible.builtin.group:
+    name: haproxy
+    state: present
+    system: true
+- name: Ensure haproxy user exists
+  ansible.builtin.user:
+    name: haproxy
+    group: haproxy
+    shell: /sbin/nologin
+    system: true
+    create_home: false
+    home: /var/lib/haproxy
+- name: Create HAProxy configuration directory
+  ansible.builtin.file:
+    path: /etc/haproxy
+    state: directory
+    mode: "0755"
+- name: Create HAProxy socket directory
+  ansible.builtin.file:
+    path: /run/haproxy
+    state: directory
+    mode: "0755"
+    owner: haproxy
+    group: haproxy
+- name: Ensure HAProxy configuration file exists
+  ansible.builtin.copy:
+    dest: /etc/haproxy/haproxy.cfg
+    content: "# Default HAProxy configuration created by Ansible\nglobal\n    log /dev/log local0\n    chroot /var/lib/haproxy\n    stats socket /run/haproxy/admin.sock
+      mode 660 level admin expose-fd listeners\n    stats timeout 30s\n    user haproxy\n    group haproxy\n    daemon\n\ndefaults\n    log global\n    mode http\n\
+      \    option httplog\n    option dontlognull\n    timeout connect 5000\n    timeout client  50000\n    timeout server  50000\n"
+    mode: "0644"
+    force: false
+- name: Configure HAProxy stats authentication
+  ansible.builtin.lineinfile:
+    path: /etc/haproxy/haproxy.cfg
+    regexp: ^(\s*)stats auth\s+
+    line: "    stats auth {{ stats_username }}:{{ stats_password }}"
+    backup: true
+  notify: Restart haproxy
+- name: Configure SSL for HAProxy
+  ansible.builtin.lineinfile:
+    path: /etc/haproxy/haproxy.cfg
+    regexp: ^(\s*)ssl-default-bind-options\s+
+    line: "    ssl-default-bind-options no-sslv3 no-tlsv10 no-tlsv11"
+    backup: true
+  when: profile_haproxy_ssl_enabled | bool
+  notify: Restart haproxy
+- name: Configure stick tables for HAProxy
+  ansible.builtin.blockinfile:
+    path: /etc/haproxy/haproxy.cfg
+    marker: "# {mark} ANSIBLE MANAGED STICK TABLES"
+    block: "stick-table type ip size 200k expire 30m stick on src "
+    backup: true
+  when: profile_haproxy_stick_table_enabled | bool
+  notify: Restart haproxy
+- name: Ensure HAProxy service is running and enabled
+  ansible.builtin.service:
+    name: haproxy
+    state: started
+    enabled: true

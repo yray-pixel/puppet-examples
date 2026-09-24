@@ -1,0 +1,16 @@
+---
+profile_base_manage_ntp: true
+profile_base_manage_syslog: true
+profile_base_manage_utils: true
+profile_haproxy_package_name: haproxy
+profile_haproxy_firewall_provider: iptables
+profile_haproxy_extra_packages: []
+profile_haproxy_ssl_enabled: true
+profile_haproxy_stick_table_enabled: false
+ntp_servers:
+  - 0.pool.ntp.org
+  - 1.pool.ntp.org
+  - 2.pool.ntp.org
+  - 3.pool.ntp.org
+syslog_server: central-log.example.com
+syslog_facility: local0

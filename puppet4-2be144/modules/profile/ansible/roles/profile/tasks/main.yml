@@ -1,0 +1,8 @@
+---
+- name: Validate credential variables
+  ansible.builtin.include_tasks: validate_credentials.yml
+- name: Include base OS configuration tasks
+  ansible.builtin.include_tasks: base.yml
+- name: Include HAProxy configuration tasks
+  ansible.builtin.include_tasks: haproxy.yml
+  when: ansible_facts['kernel'] | lower == 'linux'

@@ -1,0 +1,131 @@
+- name: Verify base configuration
+  hosts: all
+  gather_facts: false
+  tasks:
+  - name: Check if chrony package is installed
+    ansible.builtin.command:
+      cmd: dpkg-query -W -f='${Status}' chrony
+    register: chrony_check
+    changed_when: false
+    failed_when: false
+    tags: molecule-notest
+  - name: Assert chrony package is installed
+    ansible.builtin.assert:
+      that:
+      - chrony_check.rc == 0
+      - '''install ok installed'' in chrony_check.stdout'
+      fail_msg: Chrony package is not installed
+    tags: molecule-notest
+  - name: Check if rsyslog package is installed
+    ansible.builtin.command:
+      cmd: dpkg-query -W -f='${Status}' rsyslog
+    register: rsyslog_check
+    changed_when: false
+    failed_when: false
+    tags: molecule-notest
+  - name: Assert rsyslog package is installed
+    ansible.builtin.assert:
+      that:
+      - rsyslog_check.rc == 0
+      - '''install ok installed'' in rsyslog_check.stdout'
+      fail_msg: Rsyslog package is not installed
+    tags: molecule-notest
+  - name: Check chronyd service status
+    ansible.builtin.service_facts: null
+    tags: molecule-notest
+  - name: Assert chronyd service is running and enabled
+    ansible.builtin.assert:
+      that:
+      - '''chronyd'' in ansible_facts.services'
+      - ansible_facts.services['chronyd'].state == 'running'
+      - ansible_facts.services['chronyd'].status == 'enabled'
+      fail_msg: Chronyd service is not running or enabled
+    tags: molecule-notest
+  - name: Check rsyslog service status
+    ansible.builtin.service_facts: null
+    tags: molecule-notest
+  - name: Assert rsyslog service is running and enabled
+    ansible.builtin.assert:
+      that:
+      - '''rsyslog'' in ansible_facts.services'
+      - ansible_facts.services['rsyslog'].state == 'running'
+      - ansible_facts.services['rsyslog'].status == 'enabled'
+      fail_msg: Rsyslog service is not running or enabled
+    tags: molecule-notest
+- name: Verify HAProxy configuration
+  hosts: all
+  gather_facts: false
+  tasks:
+  - name: Check if HAProxy package is installed
+    ansible.builtin.command:
+      cmd: dpkg-query -W -f='${Status}' haproxy
+    register: haproxy_check
+    changed_when: false
+    failed_when: false
+    tags: molecule-notest
+  - name: Assert HAProxy package is installed
+    ansible.builtin.assert:
+      that:
+      - haproxy_check.rc == 0
+      - '''install ok installed'' in haproxy_check.stdout'
+      fail_msg: HAProxy package is not installed
+    tags: molecule-notest
+  - name: Check HAProxy configuration directory exists
+    ansible.builtin.stat:
+      path: /tmp/molecule_test/etc/haproxy
+    register: haproxy_dir_stat
+  - name: Assert HAProxy configuration directory exists
+    ansible.builtin.assert:
+      that:
+      - haproxy_dir_stat.stat.exists
+      - haproxy_dir_stat.stat.isdir
+      fail_msg: HAProxy configuration directory does not exist
+  - name: Check HAProxy configuration file exists
+    ansible.builtin.stat:
+      path: /tmp/molecule_test/etc/haproxy/haproxy.cfg
+    register: haproxy_cfg_stat
+  - name: Assert HAProxy configuration file exists
+    ansible.builtin.assert:
+      that:
+      - haproxy_cfg_stat.stat.exists
+      - haproxy_cfg_stat.stat.isreg
+      - haproxy_cfg_stat.stat.size > 0
+      fail_msg: HAProxy configuration file does not exist or is empty
+  - name: Get HAProxy configuration content
+    ansible.builtin.slurp:
+      src: /tmp/molecule_test/etc/haproxy/haproxy.cfg
+    register: haproxy_cfg_content
+  - name: Assert HAProxy stats authentication is configured
+    ansible.builtin.assert:
+      that:
+      - '''stats auth'' in (haproxy_cfg_content.content | b64decode)'
+      fail_msg: HAProxy stats authentication is not configured
+  - name: Assert HAProxy SSL configuration is present when enabled
+    ansible.builtin.assert:
+      that:
+      - '''ssl-default-bind-options'' in (haproxy_cfg_content.content | b64decode)'
+      fail_msg: HAProxy SSL configuration is not present
+    when: profile_haproxy_ssl_enabled | bool
+  - name: Assert HAProxy stick tables configuration is present when enabled
+    ansible.builtin.assert:
+      that:
+      - '''stick-table type ip'' in (haproxy_cfg_content.content | b64decode)'
+      - '''stick on src'' in (haproxy_cfg_content.content | b64decode)'
+      fail_msg: HAProxy stick tables configuration is not present
+    when: profile_haproxy_stick_table_enabled | bool
+  - name: Check HAProxy service status
+    ansible.builtin.service_facts: null
+    tags: molecule-notest
+  - name: Assert HAProxy service is running and enabled
+    ansible.builtin.assert:
+      that:
+      - '''haproxy'' in ansible_facts.services'
+      - ansible_facts.services['haproxy'].state == 'running'
+      - ansible_facts.services['haproxy'].status == 'enabled'
+      fail_msg: HAProxy service is not running or enabled
+    tags: molecule-notest
+  - name: Validate HAProxy configuration
+    ansible.builtin.command:
+      cmd: haproxy -c -f /tmp/molecule_test/etc/haproxy/haproxy.cfg
+    changed_when: false
+    tags: molecule-notest

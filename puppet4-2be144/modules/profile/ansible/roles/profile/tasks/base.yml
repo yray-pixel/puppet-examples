@@ -1,0 +1,35 @@
+---
+- name: Include base utilities
+  ansible.builtin.include_role:
+    name: base_utils
+  when: profile_base_manage_utils | bool
+- name: Install chrony package
+  ansible.builtin.package:
+    name: chrony
+    state: present
+  when:
+    - profile_base_manage_ntp | bool
+    - ansible_facts['kernel'] | lower == 'linux'
+- name: Ensure chronyd service is running and enabled
+  ansible.builtin.service:
+    name: chronyd
+    state: started
+    enabled: true
+  when:
+    - profile_base_manage_ntp | bool
+    - ansible_facts['kernel'] | lower == 'linux'
+- name: Install rsyslog package
+  ansible.builtin.package:
+    name: rsyslog
+    state: present
+  when:
+    - profile_base_manage_syslog | bool
+    - ansible_facts['kernel'] | lower == 'linux'
+- name: Ensure rsyslog service is running and enabled
+  ansible.builtin.service:
+    name: rsyslog
+    state: started
+    enabled: true
+  when:
+    - profile_base_manage_syslog | bool
+    - ansible_facts['kernel'] | lower == 'linux'

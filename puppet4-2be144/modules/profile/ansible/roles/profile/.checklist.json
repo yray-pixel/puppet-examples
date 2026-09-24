@@ -1,0 +1,149 @@
+{
+  "module_name": "profile",
+  "items": [
+    {
+      "category": "credentials",
+      "source_path": "N/A",
+      "target_path": "ansible/roles/profile/aap-configuration/controller_credential_types.yml",
+      "status": "complete",
+      "description": "AAP credential types configuration",
+      "notes": ""
+    },
+    {
+      "category": "credentials",
+      "source_path": "N/A",
+      "target_path": "ansible/roles/profile/aap-configuration/controller_credentials.yml",
+      "status": "complete",
+      "description": "AAP credentials configuration",
+      "notes": ""
+    },
+    {
+      "category": "credentials",
+      "source_path": "N/A",
+      "target_path": "ansible/roles/profile/tasks/validate_credentials.yml",
+      "status": "complete",
+      "description": "Credential validation tasks",
+      "notes": ""
+    },
+    {
+      "category": "structure",
+      "source_path": "N/A",
+      "target_path": "./ansible/roles/profile/meta/main.yml",
+      "status": "complete",
+      "description": "Role metadata",
+      "notes": "Created standard meta/main.yml"
+    },
+    {
+      "category": "structure",
+      "source_path": "N/A",
+      "target_path": "./ansible/roles/profile/meta/argument_specs.yml",
+      "status": "complete",
+      "description": "Role argument specs for fail-fast parameter validation",
+      "notes": ""
+    },
+    {
+      "category": "structure",
+      "source_path": "N/A",
+      "target_path": "./ansible/roles/profile/defaults/main.yml",
+      "status": "complete",
+      "description": "Main defaults file for role variables",
+      "notes": ""
+    },
+    {
+      "category": "structure",
+      "source_path": "N/A",
+      "target_path": "./ansible/roles/profile/handlers/main.yml",
+      "status": "complete",
+      "description": "Main handlers file",
+      "notes": ""
+    },
+    {
+      "category": "recipes",
+      "source_path": "N/A",
+      "target_path": "./ansible/roles/profile/tasks/main.yml",
+      "status": "complete",
+      "description": "Main tasks file",
+      "notes": ""
+    },
+    {
+      "category": "recipes",
+      "source_path": "site-modules/profile/manifests/base/base.pp",
+      "target_path": "./ansible/roles/profile/tasks/base.yml",
+      "status": "complete",
+      "description": "Base configuration tasks",
+      "notes": ""
+    },
+    {
+      "category": "recipes",
+      "source_path": "site-modules/profile/manifests/loadbalancer/haproxy.pp",
+      "target_path": "./ansible/roles/profile/tasks/haproxy.yml",
+      "status": "complete",
+      "description": "HAProxy load balancer configuration tasks",
+      "notes": ""
+    },
+    {
+      "category": "recipes",
+      "source_path": "site-modules/role/manifests/haproxy.pp",
+      "target_path": "./ansible/roles/profile/tasks/role_haproxy.yml",
+      "status": "complete",
+      "description": "HAProxy role tasks (combines base and haproxy profiles)",
+      "notes": ""
+    },
+    {
+      "category": "attributes",
+      "source_path": "N/A",
+      "target_path": "./ansible/roles/profile/vars/main.yml",
+      "status": "complete",
+      "description": "Variables for HAProxy configuration",
+      "notes": ""
+    },
+    {
+      "category": "molecule",
+      "source_path": "N/A",
+      "target_path": "./ansible/roles/profile/molecule/default/molecule.yml",
+      "status": "complete",
+      "description": "Molecule scenario configuration",
+      "notes": "Created by MoleculeAgent (deterministic scaffold)"
+    },
+    {
+      "category": "molecule",
+      "source_path": "N/A",
+      "target_path": "./ansible/roles/profile/molecule/default/converge.yml",
+      "status": "complete",
+      "description": "Molecule converge playbook",
+      "notes": "Created converge.yml that sets up the test environment with necessary directories and files under /tmp/molecule_test/"
+    },
+    {
+      "category": "molecule",
+      "source_path": "N/A",
+      "target_path": "./ansible/roles/profile/molecule/default/verify.yml",
+      "status": "complete",
+      "description": "Molecule verification tasks",
+      "notes": "Created verify.yml that tests the role's functionality including package installation, service status, and configuration file checks"
+    },
+    {
+      "category": "molecule",
+      "source_path": "N/A",
+      "target_path": "./ansible/roles/profile/molecule/default/create.yml",
+      "status": "complete",
+      "description": "Molecule create playbook",
+      "notes": "Created by MoleculeAgent (deterministic scaffold)"
+    },
+    {
+      "category": "molecule",
+      "source_path": "N/A",
+      "target_path": "./ansible/roles/profile/molecule/default/destroy.yml",
+      "status": "complete",
+      "description": "Molecule destroy playbook",
+      "notes": "Created by MoleculeAgent (deterministic scaffold)"
+    },
+    {
+      "category": "dependencies",
+      "source_path": "collection:ansible.posix",
+      "target_path": "./ansible/roles/profile/requirements.yml",
+      "status": "complete",
+      "description": "Ansible POSIX collection for system tasks",
+      "notes": ""
+    }
+  ]
+}

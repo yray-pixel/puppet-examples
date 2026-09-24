@@ -1,0 +1,16 @@
+---
+- name: Restart chronyd
+  ansible.builtin.service:
+    name: chronyd
+    state: restarted
+  when: ansible_facts['kernel'] | lower == 'linux'
+- name: Restart rsyslog
+  ansible.builtin.service:
+    name: rsyslog
+    state: restarted
+  when: ansible_facts['kernel'] | lower == 'linux'
+- name: Restart haproxy
+  ansible.builtin.service:
+    name: haproxy
+    state: restarted
+  when: ansible_facts['kernel'] | lower == 'linux'
